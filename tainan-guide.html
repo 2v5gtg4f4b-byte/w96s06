@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>台南小吃地圖</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F7F1E2;
+    --bg-soft: #EFE4CB;
+    --card: #FFFFFF;
+    --card-hi: #FBF2DC;
+    --cream: #2B2118;
+    --muted: #8A7C61;
+    --gold: #A9762A;
+    --gold-dim: #CBA463;
+    --red: #A83228;
+    --line: rgba(43,33,24,0.12);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(169,118,42,0.08), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 0%, rgba(168,50,40,0.06), transparent 55%),
+      var(--bg);
+    color:var(--cream);
+    font-family:"Noto Sans TC", sans-serif;
+    min-height:100vh;
+    padding-bottom:80px;
+  }
+  .wrap{max-width:960px;margin:0 auto;padding:0 20px;}
+
+  .hero{
+    padding:56px 20px 36px;
+    text-align:center;
+    position:relative;
+  }
+  .hero .eyebrow{
+    font-size:12px;
+    letter-spacing:0.35em;
+    color:var(--gold);
+    text-transform:uppercase;
+    margin-bottom:14px;
+  }
+  .hero h1{
+    font-family:"Noto Serif TC", serif;
+    font-weight:900;
+    font-size:44px;
+    margin:0 0 10px;
+    letter-spacing:0.04em;
+  }
+  .hero p.sub{
+    color:var(--muted);
+    font-size:14px;
+    margin:0;
+  }
+  .stats{
+    display:flex;
+    justify-content:center;
+    gap:36px;
+    margin-top:28px;
+  }
+  .stat{text-align:center;}
+  .stat .num{
+    font-family:"Noto Serif TC", serif;
+    font-weight:900;
+    font-size:30px;
+    color:var(--gold);
+    display:block;
+  }
+  .stat .lbl{font-size:12px;color:var(--muted);letter-spacing:0.1em;}
+
+  .controls{
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:linear-gradient(180deg, rgba(247,241,226,0.98), rgba(247,241,226,0.94));
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);
+    padding:14px 20px;
+  }
+  .controls-inner{max-width:960px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  #search{
+    flex:1;
+    min-width:180px;
+    background:var(--bg-soft);
+    border:1px solid var(--line);
+    color:var(--cream);
+    padding:10px 14px;
+    border-radius:8px;
+    font-family:inherit;
+    font-size:14px;
+    outline:none;
+  }
+  #search::placeholder{color:var(--muted);}
+  #search:focus{border-color:var(--gold);}
+  .chip{
+    background:var(--bg-soft);
+    border:1px solid var(--line);
+    color:var(--muted);
+    padding:9px 14px;
+    border-radius:20px;
+    font-size:13px;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:all .15s ease;
+    font-family:inherit;
+  }
+  .chip:hover{border-color:var(--gold-dim);color:var(--cream);}
+  .chip.active{
+    background:var(--gold);
+    color:#241F0E;
+    border-color:var(--gold);
+    font-weight:700;
+  }
+
+  .section{margin-top:44px;}
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+    margin-bottom:18px;
+  }
+  .plaque{
+    position:relative;
+    display:inline-block;
+    background:linear-gradient(180deg, #FFFDF6, #F1E4C6);
+    border:1px solid var(--line);
+    border-radius:6px 6px 3px 3px;
+    padding:9px 20px 8px;
+    font-family:"Noto Serif TC", serif;
+    font-weight:900;
+    font-size:19px;
+    color:var(--red);
+    box-shadow:0 4px 10px rgba(43,33,24,0.12);
+  }
+  .plaque::before{
+    content:"";
+    position:absolute;
+    top:-7px; left:50%;
+    transform:translateX(-50%);
+    width:2px; height:8px;
+    background:var(--gold-dim);
+  }
+  .section-count{font-size:13px;color:var(--muted);}
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
+    gap:12px;
+  }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px 16px 14px;
+    position:relative;
+    transition:transform .15s ease, background .15s ease, border-color .15s ease;
+    cursor:default;
+    display:flex;
+    flex-direction:column;
+  }
+  .card:hover{
+    background:var(--card-hi);
+    border-color:var(--gold-dim);
+    transform:translateY(-2px);
+  }
+  .card.visited{opacity:0.45;}
+  .card.visited .name{text-decoration:line-through;text-decoration-color:var(--gold-dim);}
+  .card.hidden{display:none;}
+
+  .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .name{
+    font-family:"Noto Serif TC", serif;
+    font-weight:700;
+    font-size:15.5px;
+    line-height:1.4;
+    color:var(--cream);
+  }
+  .visit-toggle{
+    flex-shrink:0;
+    width:26px;height:26px;
+    border-radius:50%;
+    border:1.5px solid var(--gold-dim);
+    background:transparent;
+    cursor:pointer;
+    color:var(--gold);
+    font-size:13px;
+    display:flex;align-items:center;justify-content:center;
+    transition:all .15s ease;
+  }
+  .visit-toggle:hover{border-color:var(--gold);}
+  .visit-toggle.on{
+    background:var(--gold);
+    color:#241F0E;
+    border-color:var(--gold);
+  }
+
+  .rating-row{
+    display:flex;align-items:center;gap:8px;
+    margin-top:10px;
+  }
+  .stars{color:var(--gold);font-size:12px;letter-spacing:1px;}
+  .score{font-size:13px;font-weight:700;color:var(--gold);}
+  .reviews{font-size:12px;color:var(--muted);}
+  .bar{
+    height:4px;background:rgba(43,33,24,0.08);
+    border-radius:2px;margin-top:9px;overflow:hidden;
+  }
+  .bar-fill{height:100%;background:linear-gradient(90deg, var(--gold-dim), var(--gold));}
+
+  .must-eat{
+    margin-top:12px;
+    padding:10px 12px;
+    background:rgba(227,178,60,0.07);
+    border-left:2px solid var(--gold-dim);
+    border-radius:0 6px 6px 0;
+    font-size:12.5px;
+    line-height:1.6;
+    color:var(--cream);
+  }
+  .must-eat .must-label{
+    color:var(--gold);
+    font-weight:700;
+    font-size:11px;
+    letter-spacing:0.08em;
+    display:block;
+    margin-bottom:3px;
+  }
+
+  .card-bottom{
+    margin-top:auto;
+    padding-top:12px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+  }
+  .tag{
+    display:inline-block;
+    font-size:11px;
+    color:var(--muted);
+    border:1px solid var(--line);
+    padding:2px 8px;
+    border-radius:10px;
+  }
+  .map-link{
+    flex-shrink:0;
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    font-size:12px;
+    color:var(--gold);
+    text-decoration:none;
+    border:1px solid var(--gold-dim);
+    padding:5px 10px;
+    border-radius:14px;
+    transition:all .15s ease;
+    white-space:nowrap;
+  }
+  .map-link:hover{
+    background:var(--gold);
+    color:#241F0E;
+  }
+
+  .empty-msg{
+    text-align:center;
+    color:var(--muted);
+    padding:50px 20px;
+    display:none;
+    font-size:14px;
+  }
+
+  .footnote{
+    max-width:960px;margin:50px auto 0;padding:16px 20px;
+    border-top:1px solid var(--line);
+    font-size:12.5px;color:var(--muted);
+    line-height:1.7;
+  }
+
+  @media (max-width:480px){
+    .hero h1{font-size:32px;}
+    .stats{gap:22px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="eyebrow">Tainan Food & Wander List</div>
+  <h1>台南小吃地圖</h1>
+  <p class="sub">吃透廟埕巷弄，走過老街海線</p>
+  <div class="stats">
+    <div class="stat"><span class="num" id="stat-food">0</span><span class="lbl">美食</span></div>
+    <div class="stat"><span class="num" id="stat-spot">0</span><span class="lbl">景點/店家</span></div>
+    <div class="stat"><span class="num" id="stat-visited">0</span><span class="lbl">已造訪</span></div>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="controls-inner">
+    <input id="search" type="text" placeholder="搜尋店名…">
+    <button class="chip active" data-filter="all">全部</button>
+    <button class="chip" data-filter="beef">牛肉湯系</button>
+    <button class="chip" data-filter="classic">經典小吃</button>
+    <button class="chip" data-filter="noodle">麵食/鍋燒</button>
+    <button class="chip" data-filter="dessert">甜點/冰品</button>
+    <button class="chip" data-filter="other">餐廳/居酒屋</button>
+    <button class="chip" data-filter="cafe">老屋咖啡廳</button>
+    <button class="chip" data-filter="spot">逛</button>
+    <button class="chip" data-filter="shop">選物店/文創</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div id="sections"></div>
+  <div class="empty-msg" id="empty-msg">沒有符合「<span id="empty-term"></span>」的地方，換個關鍵字試試。</div>
+
+  <div class="footnote">
+這份清單目前共收錄：牛肉湯系 8 家、經典小吃 9 家、麵食/鍋燒 4 家、甜點/冰品 3 家、餐廳/居酒屋/其他 9 家、老屋咖啡廳/選物 5 家、逛 6 處、選物店/文創 9 家（另附 1 間旅館）。原始最早的美食清單標題寫著「33 處」，其中有一段文字疑似缺漏或亂碼，我先跳過沒收錄，如果手邊還有完整版本歡迎補給我。<br><br>
+這次「Threads 熱門推薦」文件裡提到的店家，有幾間我用地圖搜尋比對後名稱或地點對不太上（可能是分店名稱不同、或該店在地圖上找不到完全吻合的資料），我先沒有加進頁面，怕地圖連結指錯地方：<b>阿樂牛肉湯、築Bar（鍋燒）、武廟市仔肉粽、Saldo、霜咖啡、we.dessert、小時代、句日、小秘密</b>。如果你能確認正確店名/分店或提供地圖連結，我再幫你加上。<br><br>
+「必吃/必逛」欄位是綜合 Google 評論或你提供的描述整理而成，實際供應與陳列以店家現場為準；地圖連結會直接開啟 Google 地圖。點每張卡片右上角的圓圈可以標記「已造訪」。
+  </div>
+</div>
+
+<script>
+const data = [
+  {cat:"beef", label:"牛肉湯系", items:[
+    {name:"西羅殿牛肉湯", score:4.6, reviews:5662, mustEat:"溫體牛肉湯（推薦加牛筋）、蒜炒芥藍炒牛肉，可跟老闆要自製辣椒醬", mapId:"ChIJoTun0PR2bjQRhyGcuZAEZnQ"},
+    {name:"美鮮牛肉湯", score:4.2, reviews:2497, mustEat:"牛肉湯（湯頭鮮甜有鑊氣）、炒飯", mapId:"ChIJFWpKrNt1bjQRq9pqYKqL8yU"},
+    {name:"阿財牛肉湯 西門×保安店", score:4.2, reviews:797, mustEat:"牛肉湯配炒牛肉、麻油牛雜（心、肝），建議晚上6點前到避開排隊", mapId:"ChIJDWHe2jV3bjQRvT_FB1bwVdo"},
+    {name:"A-Tang Beef Soup", score:4.2, reviews:3746, mustEat:"牛肉湯、蒜香胡椒炒牛肉、炒牛肉空心菜，開店後30分內到人潮較少", mapId:"ChIJvQzvxXp2bjQRq7b74SXEkFU"},
+    {name:"三大牛肉火鍋-文化店", score:4.3, reviews:684, mustEat:"生鮮溫體牛肉涮涮鍋", mapId:"ChIJBU-v-LBxbjQRCitdKnJaF1I"},
+    {name:"文章牛肉湯 安平總店", score:4.3, reviews:23102, mustEat:"招牌牛肉湯（現切溫體牛肉）、牛肉炒飯、牛肉湯麵，人氣最旺", mapId:"ChIJDXFiuxp2bjQRSldJ3YTNG8M"},
+    {name:"阿裕牛肉涮涮鍋（崙頂店）", score:4.2, reviews:11031, mustEat:"溫體牛肉涮涮鍋、白飯配滷肉吃到飽，建議提早排隊", mapId:"ChIJz6N8OQlzbjQRwwtEcVi8ZTo"},
+    {name:"永林綜合料理（永林牛肉湯）", score:4.4, reviews:3333, mustEat:"牛肉火鍋湯頭濃郁、現切溫體牛肉，過年期間在地人常回訪", mapId:"ChIJadLi8ul2bjQR3-NioCtRSBk"},
+  ]},
+  {cat:"classic", label:"經典小吃", highlightLabel:"網路必吃", items:[
+    {name:"矮仔成蝦仁飯", score:3.6, reviews:8450, mustEat:"蝦仁飯、破布子番茄，另有炸鴨蛋", mapId:"ChIJxS-IQnp2bjQRMNnOsP0ijkg"},
+    {name:"集品蝦仁飯", score:3.7, reviews:6426, mustEat:"蝦仁飯配鴨蛋蝦仁湯，巷弄老字號", mapId:"ChIJM-GE8np2bjQRsTnfVRNIlkY"},
+    {name:"富盛號碗粿", score:4.1, reviews:6950, mustEat:"碗粿（可加蒜蓉/山葵）、魚丸湯", mapId:"ChIJezCwC8p3bjQRDdtipPr_yZQ"},
+    {name:"金得春捲", score:3.9, reviews:4172, mustEat:"現包潤餅（可選甜度），市場旁排隊名店", mapId:"ChIJCzZbxWZ2bjQR6CUWOMHz1hI"},
+    {name:"阿憨鹹粥", score:3.8, reviews:5142, mustEat:"虱目魚肉鹹粥、清蒸虱目魚，賣完提早打烊", mapId:"ChIJ1_N-XPV2bjQReZQ0UpjNZv8"},
+    {name:"阿堂鹹粥", score:3.8, reviews:8762, mustEat:"虱目魚鹹粥配油條、煎虱目魚肚，較知名但價位偏高", mapId:"ChIJdXw5bXt2bjQRWZJlJWrudzc"},
+    {name:"台南七海魚肚魚皮專賣店", score:4.0, reviews:2481, mustEat:"魚皮湯、魚肚，建議先詢問是否有肥美魚肚", mapId:"ChIJwUBMtqZ2bjQRC0mbMfxFZQE"},
+    {name:"修安扁擔豆花", score:4.4, reviews:6014, mustEat:"綜合豆花配布丁、粉粿，招牌黑糖粉粿豆花", mapId:"ChIJ2UjvqGZ2bjQRRMnl0SQ7b8c"},
+    {name:"蜷尾家 Ninao", score:4.1, reviews:7087, mustEat:"每日僅供應2種霜淇淋口味，賣完為止，建議先抽號碼牌", mapId:"ChIJbTv_-WR2bjQR77wGAOikk1o"},
+  ]},
+  {cat:"noodle", label:"麵食/鍋燒", items:[
+    {name:"沉香鍋燒", score:4.4, reviews:260, mustEat:"紹興酒雞湯鍋燒意麵、可加點魚鰾、醃蘿蔔球", mapId:"ChIJhVfoHAB3bjQRlcU_kbBTf3k"},
+    {name:"醇涎坊古早味鍋燒意麵", score:4.2, reviews:6823, mustEat:"古早味鍋燒意麵（酥炸魚酥是招牌），加料version更豐富", mapId:"ChIJw91l4np2bjQRry5JiZhNLYk"},
+    {name:"Ding Fu Fa（米食）", score:4.1, reviews:5510, mustEat:"豬油拌飯配生蛋、炸蝦捲、各式串烤（雞、鴨、豬肋排）", mapId:"ChIJ6-KHV3p2bjQRj5bVzExMZfE"},
+    {name:"慕煙（日本拉麵）", score:4.7, reviews:167, mustEat:"濃郁蝦味雞白湯拉麵，用機台點餐、現金付款，麵/飯可免費續一次", mapId:"ChIJpaCPHwB3bjQRGsoXXocdnqE"},
+  ]},
+  {cat:"dessert", label:"甜點/冰品", items:[
+    {name:"美雪冰菓室2.0", score:3.7, reviews:163, mustEat:"水蜜桃冰（每日限量前10組，需開店前排隊登記）、愛文芒果布丁冰", mapId:"ChIJQSCdT553bjQRfhZCAkCBiVs"},
+    {name:"Fun Go Tainan", score:4.6, reviews:754, mustEat:"特色刨冰（依季節推出不同口味），藏身老宅巷弄，店內裝潢也是亮點", mapId:"ChIJc2P5rul3bjQRWvcNIA1Lgx8"},
+    {name:"林家茂子白糖粿蕃薯椪", score:4.4, reviews:3710, mustEat:"白糖粿（外酥內軟裹糖粒）、地瓜球、炸芋頭酥，建議每樣都點來試", mapId:"ChIJKXUaM3t2bjQRwz3U--v76hQ"},
+  ]},
+  {cat:"other", label:"餐廳/居酒屋/其他", items:[
+    {name:"福記肉圓總店", score:3.9, reviews:1479, mustEat:"蒸肉圓（單一品項，內餡大塊豬肉，皮Q彈），內用湯免費續", mapId:"ChIJvUM2an12bjQRErjaF_ijiyg"},
+    {name:"府城國民中學九年九班", score:4.2, reviews:378, mustEat:"炸餛飩、碳烤蛋餅吐司、咖哩包，復古教室風格宵夜攤", mapId:"ChIJxZehW2N2bjQRGzsAaUE19jA"},
+    {name:"澪三酒食", score:5.0, reviews:14144, mustEat:"生蛋拌飯、烤雞肉丸、多道日式小菜，人氣旺務必提前訂位", mapId:"ChIJ-zUdsvt3bjQRopFbOxVUwHI"},
+    {name:"阿美嬤紅茶奶-武聖店", score:4.1, reviews:75, mustEat:"招牌紅茶牛奶（甜度隨冰量調整），復古裝潢適合拍照", mapId:"ChIJw63ReSh3bjQRZI_Qy-MIVho"},
+    {name:"負債女孩", score:4.8, reviews:1902, mustEat:"早午餐拼盤、招牌三明治、牛肉料理", mapId:"ChIJG2RxNkp3bjQREPPrfxYnuog"},
+    {name:"Kook Burger", score:4.6, reviews:554, mustEat:"雙層牛肉起司堡、梅酒黑糖奶昔、手切薯條，辣牛肉堡評價也高", mapId:"ChIJ3bmeD6J2bjQRAKZWojg6fsg"},
+    {name:"虎棲所2號咖啡館", score:4.9, reviews:59, mustEat:"梅子美式咖啡、東坡肉，晚間營業、老宅隱密空間", mapId:"ChIJT4nhJgB3bjQRxOYhzUD8SIc"},
+    {name:"水仙宮三兄弟魚湯店", score:4.6, reviews:1410, mustEat:"石斑魚湯、滷肉飯、炒魷魚小卷、烤魚（附椒鹽沾醬）", mapId:"ChIJxf_vGmR2bjQRt5Y-zlmNntc"},
+    {name:"無名羊肉湯", score:4.5, reviews:2098, tag:"羊肉湯", mustEat:"現宰溫體羊肉湯（無腥味），可請老闆「omakase」搭配各部位，建議清晨5:30開店前後到最新鮮", mapId:"ChIJsW5tZnB2bjQRzbg_ZbxJ_WA"},
+  ]},
+  {cat:"cafe", label:"老屋咖啡廳/選物", highlightLabel:"必逛/必點", items:[
+    {name:"kokoni café", score:4.0, reviews:966, tag:"老公寓咖啡廳", mustEat:"芋圓歐蕾鬆餅、拿鐵，懷舊台式老公寓改造空間", mapId:"ChIJy73UOXt2bjQRluyKD5fQx9g"},
+    {name:"Paripari", score:4.3, reviews:1136, tag:"選物咖啡廳", mustEat:"芝麻拿鐵、檸檬塔，二樓座位需按門鈴詢問是否有空位", mapId:"ChIJd4KnAmJ2bjQRf1g5LdX4URU"},
+    {name:"U.I.J Hotel & Hostel", score:4.6, reviews:4905, tag:"精品旅館", mustEat:"市中心精品旅館，公共空間氛圍佳，適合入內喝咖啡稍作停留", mapId:"ChIJmTZLr3x2bjQRZE6G_9_d5co"},
+    {name:"廣富號帆布包", score:4.3, reviews:242, tag:"手作帆布包", mustEat:"手工帆布包（可客製化），企鵝、鸚鵡造型包款人氣最高", mapId:"ChIJVVVVVWJ2bjQRdfT5CLGKIC0"},
+    {name:"磨磨茶 momocha", score:4.7, reviews:389, tag:"台式茶飲", mustEat:"台式茶飲配包子/麵食，老宅氛圍濃厚的複合式茶館", mapId:"ChIJBxZBbYx2bjQR1pzhBQx5cXs"},
+  ]},
+  {cat:"spot", label:"逛", items:[
+    {name:"蝸牛巷", score:4.0, reviews:5588, tag:"文青巷弄", mustEat:"巷弄裡藏著蝸牛裝飾、老宅咖啡館與選物店，適合慢慢散步尋寶", mapId:"ChIJA2cPbWN2bjQRHCZDCoo-M5w"},
+    {name:"安平老街 Anping Old Street", score:4.3, reviews:45731, tag:"經典景點", mustEat:"荷蘭時期古街，蝦捲、花生捲冰淇淋、周邊劍獅裝飾值得留意", mapId:"ChIJ_____wN2bjQRIOio8uGV_Og"},
+    {name:"漁光島", score:4.4, reviews:26745, tag:"海灘", mustEat:"看夕陽的熱門海灘，禁止下水游泳，建議傍晚前往、留意蚊蟲", mapId:"ChIJ87qwKf11bjQRMuEmcom6RX8"},
+    {name:"台南花園夜市", score:4.3, reviews:50247, tag:"人氣夜市", mustEat:"台南最大夜市，小吃攤位種類多、還有射氣球等遊戲攤位", mapId:"ChIJx7B27Vl2bjQRXNQQFasKOKI"},
+    {name:"許願所", score:4.7, reviews:233, tag:"占星／算命", mustEat:"無人自助占卜／許願空間，自行投幣，氣氛安靜有復古感", mapId:"ChIJJQR0R0p3bjQRkjWcgh5-Qlw"},
+    {name:"情懷合作社", score:4.6, reviews:140, tag:"古玩店", mustEat:"復古選物店，可挖到80、90年代懷舊小物與貼紙", mapId:"ChIJwQu3kHJ3bjQRo70b8nvXovA"},
+    {name:"Somer Chew Hotel", score:4.2, reviews:908, tag:"旅館", mustEat:"鬧區內新穎旅館，有榻榻米家庭房，步行可達多處美食與老街景點", mapId:"ChIJC-h8aj93bjQRWPBZSAnqM0A"},
+  ]},
+  {cat:"shop", label:"選物店/文創", highlightLabel:"必逛亮點", items:[
+    {name:"又又美FotoShop", score:4.2, reviews:783, tag:"復古底片相機", mustEat:"復古底片相機、攝影器材周邊、古董玩具與創意文具；美式打卡牆、二樓造景拍照區、復古拍貼機", mapId:"ChIJqyY5XRd3bjQRdstdumxJeaU"},
+    {name:"ACAVE STORE 古窟商行", score:4.5, reviews:184, tag:"美式復古/Y2K", mustEat:"嚴選古著服飾、潮流配件與質感生活雜貨；設有人氣拍貼機，陳列常更換", mapId:"ChIJVVVVVX52bjQRF9igDQSCKmY"},
+    {name:"餐桌上的鹿早", score:4.3, reviews:1301, tag:"日式器皿", mustEat:"日系花色碗盤、玻璃杯、陶瓷餐具與精細小物；空間緊湊，走動選購留意腳下展示品", mapId:"ChIJU1VlR4l2bjQRoah3Hbo41r4"},
+    {name:"林好商店 LIN HAO STORE", score:4.6, reviews:57, tag:"在地生活選物", mustEat:"一樓台灣職人食材、手工零食、無添加冰淇淋；二樓香氛、保養品與設計生活小物", mapId:"ChIJY4zffFl3bjQReQRm5VXH-A8"},
+    {name:"Ryme", score:4.5, reviews:81, tag:"韓系選物", mustEat:"日韓文創品牌雜貨、原創「主廚小熊」周邊與飾品；烤箱造景拍貼機，適合結伴打卡", mapId:"ChIJWU74lIV3bjQRIbrTc5QloEU"},
+    {name:"KKOBA APARTMENT 韓國文創選物店", score:4.9, reviews:527, tag:"韓國文創", mustEat:"韓國流行包款、造型吊飾、質感餐具與文具；可體驗 DIY 刺繡燙布貼，做專屬配件", mapId:"ChIJQwi6SAB3bjQRgHeXJfDJnlk"},
+    {name:"死腦筋選物所", score:4.8, reviews:48, tag:"獵奇趣味", mustEat:"客製化原創吊飾、復古襯衫、獵奇公仔與手繪創作周邊；貼滿風趣小紙條，庭院氣氛隨興", mapId:"ChIJqdk3z7R3bjQRTkmpfl8YFo8"},
+    {name:"StableNice BLDG.", score:4.3, reviews:929, tag:"老宅藝文複合空間", mustEat:"50年連棟老宅改建，磨石子地板配清水模，可逛設計書籍、藝文展覽與質感選物，並享現沖咖啡", mapId:"ChIJfYm5zK93bjQRQezTliFyOXU"},
+    {name:"台南林百貨", score:4.4, reviews:29319, tag:"古蹟百貨", mustEat:"全台僅存日治時期古蹟百貨，各樓層有在地文創、老字號伴手禮、時尚服飾；可搭古董流線型指針電梯，頂樓還有神社遺跡", mapId:"ChIJrZJc4GJ2bjQRa3BRyIgtRcM"},
+  ]},
+];
+
+const sectionsEl = document.getElementById("sections");
+let visited = new Set();
+
+function starString(score){
+  const full = Math.round(score);
+  return "★".repeat(full) + "☆".repeat(5-full);
+}
+
+function mapUrl(name, mapId){
+  return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(name) + "&query_place_id=" + mapId;
+}
+
+function render(){
+  sectionsEl.innerHTML = "";
+  let foodCount = 0, spotCount = 0;
+  data.forEach(group=>{
+    if(group.cat === "spot" || group.cat === "shop") spotCount += group.items.length;
+    else foodCount += group.items.length;
+
+    const section = document.createElement("div");
+    section.className = "section";
+    section.dataset.cat = group.cat;
+
+    section.innerHTML = `
+      <div class="section-head">
+        <div class="plaque">${group.label}</div>
+        <div class="section-count">${group.items.length} 處</div>
+      </div>
+      <div class="grid"></div>
+    `;
+    const grid = section.querySelector(".grid");
+
+    group.items.forEach((item, idx)=>{
+      const id = group.cat + "-" + idx;
+      const card = document.createElement("div");
+      card.className = "card";
+      card.dataset.name = item.name.toLowerCase();
+      card.dataset.id = id;
+      card.innerHTML = `
+        <div class="card-top">
+          <div class="name">${item.name}</div>
+          <button class="visit-toggle" data-id="${id}" title="標記已造訪">✓</button>
+        </div>
+        <div class="rating-row">
+          <span class="stars">${starString(item.score)}</span>
+          <span class="score">${item.score.toFixed(1)}</span>
+          <span class="reviews">(${item.reviews.toLocaleString()})</span>
+        </div>
+        <div class="bar"><div class="bar-fill" style="width:${(item.score/5*100).toFixed(0)}%"></div></div>
+        <div class="must-eat"><span class="must-label">${group.highlightLabel || "網路必吃"}</span>${item.mustEat}</div>
+        <div class="card-bottom">
+          ${item.tag ? `<span class="tag">${item.tag}</span>` : `<span></span>`}
+          <a class="map-link" href="${mapUrl(item.name, item.mapId)}" target="_blank" rel="noopener">📍 地圖</a>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    sectionsEl.appendChild(section);
+  });
+
+  document.getElementById("stat-food").textContent = foodCount;
+  document.getElementById("stat-spot").textContent = spotCount;
+  updateVisitedStat();
+
+  document.querySelectorAll(".visit-toggle").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const id = btn.dataset.id;
+      const card = btn.closest(".card");
+      if(visited.has(id)){
+        visited.delete(id);
+        btn.classList.remove("on");
+        card.classList.remove("visited");
+      } else {
+        visited.add(id);
+        btn.classList.add("on");
+        card.classList.add("visited");
+      }
+      updateVisitedStat();
+    });
+  });
+}
+
+function updateVisitedStat(){
+  document.getElementById("stat-visited").textContent = visited.size;
+}
+
+render();
+
+let currentFilter = "all";
+document.querySelectorAll(".chip").forEach(chip=>{
+  chip.addEventListener("click", ()=>{
+    document.querySelectorAll(".chip").forEach(c=>c.classList.remove("active"));
+    chip.classList.add("active");
+    currentFilter = chip.dataset.filter;
+    applyFilters();
+  });
+});
+
+const searchInput = document.getElementById("search");
+searchInput.addEventListener("input", applyFilters);
+
+function applyFilters(){
+  const term = searchInput.value.trim().toLowerCase();
+  let anyVisible = false;
+  document.querySelectorAll(".section").forEach(section=>{
+    const catMatch = currentFilter === "all" || section.dataset.cat === currentFilter;
+    let sectionHasVisible = false;
+    section.querySelectorAll(".card").forEach(card=>{
+      const nameMatch = !term || card.dataset.name.includes(term);
+      const visible = catMatch && nameMatch;
+      card.classList.toggle("hidden", !visible);
+      if(visible) sectionHasVisible = true;
+    });
+    section.style.display = sectionHasVisible ? "" : "none";
+    if(sectionHasVisible) anyVisible = true;
+  });
+  document.getElementById("empty-msg").style.display = anyVisible ? "none" : "block";
+  document.getElementById("empty-term").textContent = term;
+}
+</script>
+
+</body>
+</html>
